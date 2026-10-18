@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>やまびこ町 公式防災・地域分析ポータル | 第4回定例会 事前学習・班活動用</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        yama: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#16a34a',
+                            700: '#15803d',
+                            800: '#14532d',
+                            900: '#092e18',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .map-zone {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .map-zone:hover {
+            filter: brightness(0.96) drop-shadow(0 4px 6px rgba(0,0,0,0.18));
+            transform: translateY(-1px);
+        }
+        .map-zone.active-zone {
+            stroke: #092e18;
+            stroke-width: 4px;
+            filter: drop-shadow(0 8px 12px rgba(9, 46, 24, 0.3));
+        }
+        .sediment-pattern {
+            background-image: repeating-linear-gradient(
+                -45deg,
+                rgba(234, 88, 12, 0.3),
+                rgba(234, 88, 12, 0.3) 7px,
+                rgba(220, 38, 38, 0.55) 7px,
+                rgba(220, 38, 38, 0.55) 14px
+            );
+        }
+        .flood-pattern {
+            background-color: rgba(56, 189, 248, 0.35);
+            border: 1px dashed #0284c7;
+        }
+        .pulse-dot {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Alert / Study Guide Banner -->
+    <div class="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs sm:text-sm text-amber-900">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span class="bg-amber-600 text-white font-bold px-2 py-0.5 rounded text-xs shrink-0">第4回定例会 事前学習・班活動用</span>
+                <span class="font-medium">この地域資料には「正解となる制度」は示していません。報告された問題から、班で<strong>対象者・原因・解決策・代替策</strong>を設計してください。</span>
+            </div>
+            <button onclick="openGuideModal()" class="text-amber-800 underline hover:text-amber-950 font-semibold shrink-0 flex items-center gap-1">
+                <i class="ph ph-info"></i> 資料の読み方・出典を確認
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Municipal Header -->
+    <header class="bg-yama-800 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <!-- Brand Title -->
+            <div class="flex items-center gap-4">
+                <div class="bg-white/10 p-2.5 rounded-xl border border-white/20 flex items-center justify-center">
+                    <i class="ph-fill ph-mountains text-3xl text-emerald-300"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-2xl sm:text-3xl font-black tracking-tight">やまびこ町</h1>
+                        <span class="text-xs bg-emerald-500/30 border border-emerald-400/40 px-2 py-0.5 rounded-full text-emerald-100">山間部型 × 集中豪雨・土砂災害</span>
+                    </div>
+                    <p class="text-xs text-emerald-200 tracking-wider">Yamabiko Town — 山と人がつながる、安心して暮らせるまち（つながる備え、支え合う未来）</p>
+                </div>
+            </div>
+
+            <!-- Scenario Summary Box -->
+            <div class="flex flex-wrap items-center gap-3 bg-yama-900/90 border border-white/15 px-4 py-2 rounded-xl text-xs">
+                <div>
+                    <span class="text-emerald-300 block font-bold">想定発災日時・気象条件</span>
+                    <span class="font-semibold text-white">梅雨末期 午前2:00 / 線状降水帯停滞（24時間雨量420mm）</span>
+                </div>
+                <div class="h-7 w-px bg-white/20 hidden sm:block"></div>
+                <div>
+                    <span class="text-amber-300 block font-bold">同時多発事象</span>
+                    <span class="text-slate-200">河川氾濫・土砂崩れ・道路寸断・停電・断水・通信不通</span>
+                </div>
+                <button id="simToggleBtn" onclick="toggleDisasterMode()" class="ml-2 bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-2 rounded-lg shadow flex items-center gap-1.5 transition">
+                    <span class="w-2 h-2 rounded-full bg-white pulse-dot"></span>
+                    <span>豪雨・孤立連鎖ビュー切替</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-yama-900 border-t border-white/10">
+            <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto no-scrollbar">
+                <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active-tab px-4 py-3 text-sm font-bold border-b-2 border-emerald-400 text-white flex items-center gap-2 whitespace-nowrap">
+                    <i class="ph ph-map-trifold text-lg"></i> 1. 全体マップ・地区構成
+                </button>
+                <button onclick="switchTab('problems')" id="tab-problems" class="nav-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-300 hover:text-white flex items-center gap-2 whitespace-nowrap">
+                    <i class="ph ph-warning-octagon text-lg"></i> 2. 報告された問題点 (全48件)
+                </button>
+                <button onclick="switchTab('personas')" id="tab-personas" class="nav-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-300 hover:text-white flex items-center gap-2 whitespace-nowrap">
+                    <i class="ph ph-users-four text-lg"></i> 3. 重点対象者 (7類型・複合ケース)
+                </button>
+                <button onclick="switchTab('hazard')" id="tab-hazard" class="nav-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-300 hover:text-white flex items-center gap-2 whitespace-nowrap">
+                    <i class="ph ph-chart-bar text-lg"></i> 4. 防災意識・ハザードマップ・選別資料
+                </button>
+                <button onclick="switchTab('workshop')" id="tab-workshop" class="nav-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-amber-300 hover:text-amber-200 flex items-center gap-2 whitespace-nowrap">
+                    <i class="ph ph-lightbulb text-lg"></i> 5. 班活動・制度設計ワークシート
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Disaster Cascading Simulator Drawer (Hidden by default) -->
+    <div id="disasterChainPanel" class="hidden bg-slate-900 text-white border-b-4 border-amber-500 shadow-2xl transition-all">
+        <div class="max-w-7xl mx-auto px-4 py-5">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="bg-amber-600 text-white text-xs font-black px-2.5 py-1 rounded uppercase tracking-wider">Scenario 3</span>
+                    <h2 class="text-lg font-bold text-amber-200">梅雨末期・午前2時 線状降水帯停滞：複合トラブルの連鎖シミュレーション</h2>
+                </div>
+                <button onclick="toggleDisasterMode()" class="text-slate-400 hover:text-white text-sm flex items-center gap-1">
+                    <i class="ph ph-x-circle text-lg"></i> 閉じる
+                </button>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-300 mb-4">
+                山間部の夜間豪雨では、道路寸断・通信途絶・停電・河川氾濫が同時に発生し、支援する側も孤立します。下のトリガーをクリックして、班で「どの問題（#1〜#48）がどう連鎖するか」を追跡してください。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3" id="chainTriggerContainer">
+                <!-- Populated by JS -->
+            </div>
+            <div id="chainDetailBox" class="mt-4 bg-slate-800/90 border border-slate-700 rounded-xl p-4">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+
+        <!-- ==================== TAB 1: OVERVIEW & INTERACTIVE MAP ==================== -->
+        <section id="section-overview" class="space-y-8">
+            
+            <!-- 4 Stages Reading Framework Banner -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <span class="text-xs font-bold text-yama-700 uppercase tracking-wider">資料の読み方・4段階フレームワーク</span>
+                        <h2 class="text-lg font-bold text-slate-800 mt-0.5">すべての課題を「情報・判断・移動・避難生活」の4段階で検証する</h2>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 flex-1 max-w-3xl">
+                        <div class="bg-sky-50 border border-sky-200 rounded-xl p-2.5 text-center">
+                            <span class="text-xs font-bold text-sky-800 block">STEP 1. 情報</span>
+                            <span class="text-[11px] text-slate-600">豪雨音・圏外・停電でも届くか</span>
+                        </div>
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-2.5 text-center">
+                            <span class="text-xs font-bold text-indigo-800 block">STEP 2. 判断</span>
+                            <span class="text-[11px] text-slate-600">夜間暗闇・垂直か立退きか</span>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-center">
+                            <span class="text-xs font-bold text-amber-800 block">STEP 3. 移動</span>
+                            <span class="text-[11px] text-slate-600">林道寸断・橋閉鎖・車両不足</span>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-center">
+                            <span class="text-xs font-bold text-emerald-800 block">STEP 4. 避難生活</span>
+                            <span class="text-[11px] text-slate-600">孤立集落・燃料・医療・福祉</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Map & District Inspector -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left 7 Cols: Interactive SVG Map (Recreating uploaded Yamabiko Town Map & Appendix A) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-yama-800 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="font-bold text-base flex items-center gap-2">
+                                <i class="ph-fill ph-map-pin-line text-emerald-300"></i>
+                                追加資料A：やまびこ町 全体マップ（山間・河川・集落模式図）
+                            </h3>
+                            <p class="text-xs text-emerald-200">各地区をクリックすると、右側に住民分布・平時の特徴・豪雨時リスクが表示されます</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="toggleMapOverlay('hazard')" id="btn-overlay-hazard" class="text-xs bg-amber-600 text-white px-2.5 py-1 rounded font-semibold flex items-center gap-1 shadow">
+                                <i class="ph-fill ph-warning"></i> 土砂・浸水危険域表示中
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SVG Map Canvas -->
+                    <div class="relative bg-slate-100 p-2 sm:p-4">
+                        <svg viewBox="0 0 850 560" class="w-full h-auto rounded-xl border border-slate-300 bg-[#d8e8d5] shadow-inner select-none">
+                            <defs>
+                                <!-- Sediment Disaster Hatching Pattern -->
+                                <pattern id="sedimentHatch" width="12" height="12" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                                    <rect width="12" height="12" fill="rgba(251, 146, 60, 0.22)" />
+                                    <line x1="0" y1="0" x2="0" y2="12" stroke="#ea580c" stroke-width="5" stroke-opacity="0.65" />
+                                </pattern>
+                                <!-- Flood Inundation Pattern -->
+                                <pattern id="floodDots" width="10" height="10" patternUnits="userSpaceOnUse">
+                                    <rect width="10" height="10" fill="rgba(56, 189, 248, 0.35)" />
+                                    <circle cx="5" cy="5" r="1.5" fill="#0284c7" opacity="0.6" />
+                                </pattern>
+                                <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.22"/>
+                                </filter>
+                            </defs>
+
+                            <!-- Mountain Ridges Background Shapes -->
+                            <path d="M 0,0 L 850,0 L 850,260 L 680,220 L 450,240 L 180,210 L 0,250 Z" fill="#b8d5b5" />
+                            <path d="M 40,210 L 150,90 L 260,210 Z" fill="#9bc299" opacity="0.7" />
+                            <text x="150" y="195" text-anchor="middle" class="text-[11px] fill-emerald-950 font-bold opacity-80">▲ 御堂山 (935m)</text>
+
+                            <path d="M 650,180 L 755,55 L 845,180 Z" fill="#9bc299" opacity="0.7" />
+                            <text x="755" y="90" text-anchor="middle" class="text-[11px] fill-emerald-950 font-bold opacity-80">▲ 東峰山 (1,082m)</text>
+
+                            <path d="M 690,265 L 785,155 L 850,265 Z" fill="#8ab488" opacity="0.75" />
+                            <text x="780" y="235" text-anchor="middle" class="text-[11px] fill-emerald-950 font-bold opacity-80">▲ 屏風山 (1,120m)</text>
+
+                            <!-- Tributary Streams (支流) from Northern Mountains -->
+                            <path d="M 380,45 Q 410,160 400,295" fill="none" stroke="#38bdf8" stroke-width="6" />
+                            <path d="M 620,65 Q 590,190 555,310" fill="none" stroke="#38bdf8" stroke-width="6" />
+
+                            <!-- Yamabiko Lake & Dam (やまびこ湖・やまびこダム) -->
+                            <path d="M 80,435 Q 190,415 265,455 L 285,555 L 65,555 Z" fill="#0284c7" opacity="0.85" />
+                            <text x="175" y="505" text-anchor="middle" class="text-sm fill-white font-black tracking-widest">やまびこ湖</text>
+                            <rect x="85" y="490" width="36" height="12" fill="#334155" stroke="white" stroke-width="1" />
+                            <text x="103" y="518" text-anchor="middle" class="text-[9px] fill-white font-bold">やまびこダム(放流注意)</text>
+
+                            <!-- Main River: やまびこ川 -->
+                            <path d="M 0,340 Q 160,340 250,315 T 490,295 T 720,345 L 850,365" fill="none" stroke="#0ea5e9" stroke-width="22" opacity="0.85" />
+                            <path d="M 250,315 Q 230,385 215,445" fill="none" stroke="#0ea5e9" stroke-width="18" opacity="0.85" />
+                            <text x="315" y="292" class="text-xs fill-sky-900 font-black">やまびこ川</text>
+
+                            <!-- 1. Northern District: 奥峰地区（上谷・東峰などの孤立可能性集落・携帯圏外） -->
+                            <g id="zone-okumine" class="map-zone" onclick="selectDistrict('okumine')">
+                                <path d="M 240,25 L 680,25 L 655,190 L 265,180 Z" fill="#ecfccb" stroke="#65a30d" stroke-width="2.5" fill-opacity="0.85" />
+                                <!-- Sediment Hazard Overlays in Okumine -->
+                                <path class="hazard-overlay" d="M 270,95 L 395,70 L 420,165 L 285,170 Z" fill="url(#sedimentHatch)" stroke="#ea580c" stroke-width="1.5" stroke-dasharray="4,2" />
+                                <rect x="280" y="38" width="165" height="46" rx="6" fill="white" fill-opacity="0.92" filter="url(#shadow)"/>
+                                <text x="362" y="56" text-anchor="middle" class="text-xs fill-lime-950 font-black">奥峰地区 (上谷・東峰集落)</text>
+                                <text x="362" y="73" text-anchor="middle" class="text-[10px] fill-lime-800 font-bold">高齢化58%・携帯圏外・一本道孤立</text>
+
+                                <!-- Forest Road (林道・代替路) -->
+                                <path d="M 380,110 Q 490,85 575,130" fill="none" stroke="#15803d" stroke-width="5" stroke-dasharray="8,5" />
+                                <rect x="425" y="112" width="120" height="22" rx="4" fill="#064e3b" />
+                                <text x="485" y="126" text-anchor="middle" class="text-[9px] fill-emerald-200 font-bold">林道(代替路・車両困難)</text>
+
+                                <!-- Community Shelters -->
+                                <rect x="355" y="95" width="75" height="20" rx="4" fill="#15803d" stroke="white" stroke-width="1.5" />
+                                <text x="392" y="109" text-anchor="middle" class="text-[9px] fill-white font-bold">避 上谷集会所</text>
+                                <rect x="555" y="95" width="75" height="20" rx="4" fill="#15803d" stroke="white" stroke-width="1.5" />
+                                <text x="592" y="109" text-anchor="middle" class="text-[9px] fill-white font-bold">避 東峰集会所</text>
+                            </g>
+
+                            <!-- 2. Eastern District: 杉ノ沢地区（土砂災害警戒区域・林業・外国人技能実習生・空き家） -->
+                            <g id="zone-suginosawa" class="map-zone" onclick="selectDistrict('suginosawa')">
+                                <path d="M 575,165 L 820,145 L 815,315 L 555,285 Z" fill="#fef3c7" stroke="#d97706" stroke-width="2.5" fill-opacity="0.88" />
+                                <!-- Heavy Sediment Risk Overlay -->
+                                <path class="hazard-overlay" d="M 605,175 L 765,165 L 755,275 L 595,265 Z" fill="url(#sedimentHatch)" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,2" />
+                                <rect x="605" y="185" width="165" height="48" rx="6" fill="white" fill-opacity="0.94" filter="url(#shadow)"/>
+                                <text x="687" y="204" text-anchor="middle" class="text-xs fill-amber-950 font-black">杉ノ沢地区 (東部山麓)</text>
+                                <text x="687" y="221" text-anchor="middle" class="text-[10px] fill-amber-800 font-bold">土砂警戒区域・林業・実習生・空き家</text>
+                                <!-- Satellite Relay icon -->
+                                <rect x="720" y="140" width="85" height="20" rx="4" fill="#1e293b" stroke="white" stroke-width="1" />
+                                <text x="762" y="154" text-anchor="middle" class="text-[9px] fill-sky-300 font-bold">📡 衛星通信基地</text>
+                            </g>
+
+                            <!-- 3. Central District: やまびこ中心地区（役場・病院・物資拠点・総合避難所が川沿いに集中） -->
+                            <g id="zone-chuo" class="map-zone active-zone" onclick="selectDistrict('chuo')">
+                                <path d="M 290,225 L 555,230 L 550,365 L 285,355 Z" fill="#fee2e2" stroke="#ef4444" stroke-width="2.5" fill-opacity="0.9" />
+                                <!-- River Flood Risk Overlay -->
+                                <path class="hazard-overlay" d="M 295,275 L 545,280 L 540,355 L 290,348 Z" fill="url(#floodDots)" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="5,3" />
+                                <rect x="335" y="205" width="175" height="44" rx="6" fill="white" fill-opacity="0.95" filter="url(#shadow)"/>
+                                <text x="422" y="223" text-anchor="middle" class="text-xs fill-rose-950 font-black">やまびこ中心地区</text>
+                                <text x="422" y="239" text-anchor="middle" class="text-[10px] fill-rose-800 font-bold">役場・診療所・総合避難所(内水氾濫)</text>
+
+                                <!-- Key Municipal Facilities in Center -->
+                                <rect x="330" y="260" width="70" height="22" rx="4" fill="#0f172a" stroke="white" stroke-width="1.5" />
+                                <text x="365" y="275" text-anchor="middle" class="text-[9px] fill-white font-bold">🏛️ 町役場・本部</text>
+
+                                <rect x="410" y="260" width="62" height="22" rx="4" fill="#dc2626" stroke="white" stroke-width="1.5" />
+                                <text x="441" y="275" text-anchor="middle" class="text-[9px] fill-white font-bold">＋ 診療所・病院</text>
+
+                                <rect x="480" y="260" width="68" height="22" rx="4" fill="#15803d" stroke="white" stroke-width="1.5" />
+                                <text x="514" y="275" text-anchor="middle" class="text-[9px] fill-white font-bold">避 中学校避難所</text>
+
+                                <rect x="445" y="292" width="75" height="22" rx="4" fill="#2563eb" stroke="white" stroke-width="1.5" />
+                                <text x="482" y="307" text-anchor="middle" class="text-[9px] fill-white font-bold">♿ 福祉避難所</text>
+                            </g>
+
+                            <!-- 4. Southern River District: 川原谷地区（河川沿い住宅・高齢者施設・橋依存） -->
+                            <g id="zone-kawaradani" class="map-zone" onclick="selectDistrict('kawaradani')">
+                                <path d="M 305,370 L 665,375 L 650,515 L 315,515 Z" fill="#e0f2fe" stroke="#0284c7" stroke-width="2.5" fill-opacity="0.9" />
+                                <!-- Flood & Sediment Overlay -->
+                                <path class="hazard-overlay" d="M 315,370 L 645,375 L 635,445 L 320,440 Z" fill="url(#floodDots)" stroke="#0284c7" stroke-width="1.5" />
+                                <rect x="365" y="425" width="185" height="48" rx="6" fill="white" fill-opacity="0.95" filter="url(#shadow)"/>
+                                <text x="457" y="444" text-anchor="middle" class="text-xs fill-sky-950 font-black">川原谷地区 (川沿い集落・施設)</text>
+                                <text x="457" y="461" text-anchor="middle" class="text-[10px] fill-sky-800 font-bold">河川氾濫・橋通行止め・夜間高齢者施設</text>
+
+                                <!-- Elderly Facility & Heliport -->
+                                <rect x="535" y="390" width="85" height="22" rx="4" fill="#7c3aed" stroke="white" stroke-width="1.5" />
+                                <text x="577" y="405" text-anchor="middle" class="text-[9px] fill-white font-bold">🏥 川原谷高齢者施設</text>
+
+                                <rect x="675" y="395" width="125" height="32" rx="6" fill="#1d4ed8" stroke="white" stroke-width="1.5" />
+                                <text x="737" y="410" text-anchor="middle" class="text-[10px] fill-white font-black">H ヘリ臨時離着陸場</text>
+                                <text x="737" y="422" text-anchor="middle" class="text-[8px] fill-sky-200">(やまびこ運動公園・高台)</text>
+                            </g>
+
+                            <!-- 5. Western Resort District: 高原観光地区（温泉・キャンプ場・最大4,000人の観光客） -->
+                            <g id="zone-kogen" class="map-zone" onclick="selectDistrict('kogen')">
+                                <path d="M 25,260 L 255,250 L 245,425 L 25,430 Z" fill="#f3e8ff" stroke="#9333ea" stroke-width="2.5" fill-opacity="0.9" />
+                                <path class="hazard-overlay" d="M 120,260 L 245,255 L 240,335 L 125,330 Z" fill="url(#sedimentHatch)" stroke="#ea580c" stroke-width="1.5" />
+                                <rect x="42" y="280" width="165" height="48" rx="6" fill="white" fill-opacity="0.95" filter="url(#shadow)"/>
+                                <text x="124" y="299" text-anchor="middle" class="text-xs fill-purple-950 font-black">高原観光地区 (温泉・キャンプ)</text>
+                                <text x="124" y="316" text-anchor="middle" class="text-[10px] fill-purple-800 font-bold">最大4,000人滞在・土地勘なし・車集中</text>
+
+                                <rect x="135" y="350" width="90" height="24" rx="5" fill="#e11d48" stroke="white" stroke-width="1.5" />
+                                <text x="180" y="366" text-anchor="middle" class="text-[9px] fill-white font-bold">♨️ やまびこ温泉郷</text>
+                            </g>
+
+                            <!-- Prefectural Road 12 (県道12号・主要道路) & Bridges -->
+                            <path d="M 0,320 L 265,305 L 420,295 L 650,335 L 850,340" fill="none" stroke="#facc15" stroke-width="6" />
+                            <path d="M 0,320 L 265,305 L 420,295 L 650,335 L 850,340" fill="none" stroke="#713f12" stroke-width="1.5" stroke-dasharray="10,6" />
+                            <rect x="175" y="232" width="110" height="18" rx="4" fill="#1e3a8a" />
+                            <text x="230" y="244" text-anchor="middle" class="text-[9px] fill-white font-bold">県道12号 (主要道路)</text>
+
+                            <!-- Single Mountain Road to Okumine (一本道・土砂寸断箇所) -->
+                            <path d="M 375,295 L 365,115" fill="none" stroke="#ffffff" stroke-width="4.5" />
+                            <g transform="translate(345, 188)">
+                                <polygon points="0,-12 -12,10 12,10" fill="#facc15" stroke="#000" stroke-width="1.5" />
+                                <text x="0" y="8" text-anchor="middle" class="text-[11px] font-black">!</text>
+                                <text x="48" y="4" class="text-[10px] fill-rose-950 font-black bg-white">土砂寸断危険</text>
+                            </g>
+
+                            <!-- Critical Bridges (清流橋 & やまびこ橋) -->
+                            <g transform="translate(275, 312)">
+                                <rect x="-16" y="-12" width="32" height="24" rx="3" fill="#334155" stroke="#facc15" stroke-width="2" />
+                                <text x="0" y="4" text-anchor="middle" class="text-[9px] fill-white font-bold">清流橋</text>
+                            </g>
+                            <g transform="translate(635, 338)">
+                                <rect x="-22" y="-12" width="44" height="24" rx="3" fill="#991b1b" stroke="#facc15" stroke-width="2" />
+                                <text x="0" y="4" text-anchor="middle" class="text-[9px] fill-white font-bold">やまびこ橋</text>
+                                <text x="0" y="23" text-anchor="middle" class="text-[9px] fill-rose-900 font-black">⚠️通行止危険</text>
+                            </g>
+
+                            <!-- Direction Labels to Neighboring Cities -->
+                            <text x="15" y="305" class="text-[11px] fill-slate-800 font-black">← 隣市へ (約40km)</text>
+                            <text x="740" y="325" class="text-[11px] fill-slate-800 font-black">隣町へ (約35km) →</text>
+
+                            <!-- Compass Rose -->
+                            <g transform="translate(810, 42)">
+                                <circle cx="0" cy="0" r="18" fill="white" stroke="#1e293b" stroke-width="2"/>
+                                <polygon points="0,-14 -6,8 0,3 6,8" fill="#1e293b"/>
+                                <text x="0" y="-22" text-anchor="middle" class="text-xs fill-slate-900 font-black">N</text>
+                            </g>
+                        </svg>
+
+                        <!-- Map Legend -->
+                        <div class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs bg-white p-3 rounded-xl border border-slate-200">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-4 h-4 rounded bg-emerald-700 text-white flex items-center justify-center font-bold text-[10px]">避</span>
+                                <span>指定/自主避難所 (31)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-4 h-4 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-[10px]">♿</span>
+                                <span>福祉避難所 (4か所)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-4 h-4 rounded sediment-pattern border border-orange-600"></span>
+                                <span>土砂災害警戒・危険区域</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-4 h-4 rounded flood-pattern"></span>
+                                <span>河川氾濫・浸水想定区域</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-4 h-1.5 bg-amber-400 border border-amber-900"></span>
+                                <span>主要県道・橋梁ボトルネック</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right 5 Cols: Selected District Dynamic Detail Card -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div id="districtDetailCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                        <!-- Dynamically rendered via JS -->
+                    </div>
+
+                    <!-- Structural Takeaways from Map (追加資料A 地図から読み取れる構造) -->
+                    <div class="bg-slate-800 text-white rounded-2xl p-5 shadow-sm">
+                        <h4 class="text-sm font-bold text-emerald-300 flex items-center gap-2 mb-3">
+                            <i class="ph-fill ph-compass-tool text-lg"></i>
+                            地図から読み取れる山間構造上の急所（追加資料A）
+                        </h4>
+                        <ul class="space-y-2 text-xs text-slate-200 leading-relaxed">
+                            <li class="flex items-start gap-2">
+                                <span class="text-lime-400 font-bold">●</span>
+                                <span><strong>一本道集落の孤立：</strong>奥峰地区（上谷・東峰など14集落）は中心部へ至る経路が一本に近く、土砂崩れや林道寸断で即座に孤立する。</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-sky-400 font-bold">●</span>
+                                <span><strong>橋梁への依存と分断：</strong>川原谷地区の住宅・高齢者施設は河川と橋に依存しており、橋梁閉鎖で中心部の病院や福祉避難所へ移動できなくなる。</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-rose-400 font-bold">●</span>
+                                <span><strong>中枢機能の同時被災：</strong>中心地区の役場・病院・物資拠点・総合避難所も川沿いの平地にあり、内水氾濫・外水氾濫で町全体の支援機能が同時被災する。</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-purple-400 font-bold">●</span>
+                                <span><strong>観光車両との競合：</strong>高原観光地区の来訪者（最大4,000人）の避難車両が主要道路（県道12号）に流入すると、住民避難・救急搬送と深刻に競合する。</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 1: Town Profile Statistics Grid (地域プロフィール) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+                    <div>
+                        <span class="text-xs font-bold text-yama-700 uppercase">Section 1 & Appendix B</span>
+                        <h3 class="text-xl font-black text-slate-800">1. やまびこ町 地域プロフィール・基礎統計データ</h3>
+                    </div>
+                    <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">※数値はすべて学習用の架空設定であり、実在自治体の統計ではありません</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500 block">総人口 / 世帯数</span>
+                        <span class="text-lg font-black text-slate-800">21,600<small class="text-xs font-normal">人</small></span>
+                        <span class="text-[11px] text-slate-500 block mt-0.5">9,200世帯 (広大面積 412km²)</span>
+                    </div>
+                    <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-200">
+                        <span class="text-xs text-amber-800 font-semibold block">65歳以上 (高齢化率43.6%)</span>
+                        <span class="text-lg font-black text-amber-900">約9,400<small class="text-xs font-normal">人</small></span>
+                        <span class="text-[11px] text-amber-700 block mt-0.5">独居 2,150人 / 高齢世帯 2,700</span>
+                    </div>
+                    <div class="bg-rose-50/70 p-3.5 rounded-xl border border-rose-200">
+                        <span class="text-xs text-rose-700 font-semibold block">孤立可能性集落</span>
+                        <span class="text-lg font-black text-rose-800">14<small class="text-xs font-normal">集落</small></span>
+                        <span class="text-[11px] text-rose-600 block mt-0.5">迂回路なし・携帯圏外区域あり</span>
+                    </div>
+                    <div class="bg-purple-50/70 p-3.5 rounded-xl border border-purple-200">
+                        <span class="text-xs text-purple-800 font-semibold block">要配慮・医療福祉</span>
+                        <span class="text-sm font-black text-purple-900 block">要介護認定 約1,750人</span>
+                        <span class="text-[11px] text-purple-700 block mt-0.5">障害手帳 1,150人 / 高齢施設 7</span>
+                    </div>
+                    <div class="bg-sky-50/70 p-3.5 rounded-xl border border-sky-200">
+                        <span class="text-xs text-sky-800 font-semibold block">外国人・観光客流入</span>
+                        <span class="text-sm font-black text-sky-900 block">外国人住民 約480人</span>
+                        <span class="text-[11px] text-sky-700 block mt-0.5">豪雨時にも観光客 最大4,000人滞在</span>
+                    </div>
+                    <div class="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200">
+                        <span class="text-xs text-emerald-800 font-semibold block">地域防災・医療資源</span>
+                        <span class="text-sm font-black text-emerald-900 block">消防団員 286人</span>
+                        <span class="text-[11px] text-emerald-700 block mt-0.5">病院・診療所 6 / 福祉避難所 4</span>
+                    </div>
+                </div>
+
+                <!-- Shelter & Medical Capacity Bar -->
+                <div class="mt-4 pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="ph-fill ph-house-line text-emerald-600 text-base"></i> 指定避難所：<strong>31か所</strong>
+                        </span>
+                        <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="ph-fill ph-wheelchair text-blue-600 text-base"></i> 福祉避難所：<strong>4か所</strong>
+                        </span>
+                        <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="ph-fill ph-buildings text-purple-600 text-base"></i> 高齢者施設：<strong>7施設</strong>
+                        </span>
+                    </div>
+                    <div class="text-slate-500">
+                        ※追加資料B：65歳以上は奥峰・杉ノ沢・川原谷に集中する一方、<strong>移動支援車両は中心地区に偏在</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appendix B: District Demographic Breakdown Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 overflow-x-auto">
+                <h3 class="text-lg font-bold text-slate-800 mb-1">追加資料B：地区別の住民分布と比較マトリクス</h3>
+                <p class="text-xs text-slate-500 mb-4">同じ属性でも、居住地区と生活条件によって困難が異なります。外国人住民の多くは杉ノ沢の林業・製造業と高原観光地区の宿泊業に従事しています。</p>
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                            <th class="py-3 px-3 font-bold">地区名</th>
+                            <th class="py-3 px-3 font-bold text-right">人口</th>
+                            <th class="py-3 px-3 font-bold text-right">65歳以上 (高齢化率)</th>
+                            <th class="py-3 px-3 font-bold text-right">外国人住民</th>
+                            <th class="py-3 px-3 font-bold text-right">乳幼児</th>
+                            <th class="py-3 px-3 font-bold text-right">障害・医療配慮</th>
+                            <th class="py-3 px-3 font-bold text-right text-rose-700">つながり弱層</th>
+                            <th class="py-3 px-3 font-bold">平時・災害時の特徴</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="hover:bg-rose-50/40 cursor-pointer" onclick="selectDistrict('chuo')">
+                            <td class="py-3 px-3 font-bold text-rose-900">やまびこ中心地区</td>
+                            <td class="py-3 px-3 text-right font-semibold">6,500</td>
+                            <td class="py-3 px-3 text-right">1,900 (29.2%)</td>
+                            <td class="py-3 px-3 text-right">120</td>
+                            <td class="py-3 px-3 text-right font-bold">520</td>
+                            <td class="py-3 px-3 text-right font-bold">420</td>
+                            <td class="py-3 px-3 text-right font-bold text-rose-600">850</td>
+                            <td class="py-3 px-3 text-xs text-slate-600">病院・役場・集合住宅・単身世帯。川沿い内水氾濫リスク</td>
+                        </tr>
+                        <tr class="hover:bg-sky-50/40 cursor-pointer" onclick="selectDistrict('kawaradani')">
+                            <td class="py-3 px-3 font-bold text-sky-900">川原谷地区</td>
+                            <td class="py-3 px-3 text-right font-semibold">4,200</td>
+                            <td class="py-3 px-3 text-right font-bold text-amber-700">1,900 (45.2%)</td>
+                            <td class="py-3 px-3 text-right">60</td>
+                            <td class="py-3 px-3 text-right">210</td>
+                            <td class="py-3 px-3 text-right font-bold">310</td>
+                            <td class="py-3 px-3 text-right">380</td>
+                            <td class="py-3 px-3 text-xs text-slate-600">河川沿い・高齢者施設・車依存。橋通行止めで分断</td>
+                        </tr>
+                        <tr class="hover:bg-lime-50/40 cursor-pointer" onclick="selectDistrict('okumine')">
+                            <td class="py-3 px-3 font-bold text-lime-900">奥峰地区</td>
+                            <td class="py-3 px-3 text-right font-semibold">3,100</td>
+                            <td class="py-3 px-3 text-right font-black text-rose-700">1,800 (58.1%)</td>
+                            <td class="py-3 px-3 text-right">15</td>
+                            <td class="py-3 px-3 text-right">90</td>
+                            <td class="py-3 px-3 text-right">180</td>
+                            <td class="py-3 px-3 text-right">240</td>
+                            <td class="py-3 px-3 text-xs text-slate-600">小集落点在・携帯圏外・独居高齢。一本道寸断で孤立</td>
+                        </tr>
+                        <tr class="hover:bg-amber-50/40 cursor-pointer" onclick="selectDistrict('suginosawa')">
+                            <td class="py-3 px-3 font-bold text-amber-900">杉ノ沢地区</td>
+                            <td class="py-3 px-3 text-right font-semibold">4,300</td>
+                            <td class="py-3 px-3 text-right font-bold text-amber-700">2,100 (48.8%)</td>
+                            <td class="py-3 px-3 text-right font-bold text-emerald-700">185</td>
+                            <td class="py-3 px-3 text-right">190</td>
+                            <td class="py-3 px-3 text-right">260</td>
+                            <td class="py-3 px-3 text-right">310</td>
+                            <td class="py-3 px-3 text-xs text-slate-600">林業・外国人技能実習生・空き家増・土砂災害警戒区域</td>
+                        </tr>
+                        <tr class="hover:bg-purple-50/40 cursor-pointer" onclick="selectDistrict('kogen')">
+                            <td class="py-3 px-3 font-bold text-purple-900">高原観光地区</td>
+                            <td class="py-3 px-3 text-right font-semibold">3,500 <span class="text-[10px] text-purple-700 block">(+観光4,000)</span></td>
+                            <td class="py-3 px-3 text-right font-bold text-amber-700">1,700 (48.6%)</td>
+                            <td class="py-3 px-3 text-right font-bold text-emerald-700">100</td>
+                            <td class="py-3 px-3 text-right">240</td>
+                            <td class="py-3 px-3 text-right">230</td>
+                            <td class="py-3 px-3 text-right">330</td>
+                            <td class="py-3 px-3 text-xs text-slate-600">温泉・キャンプ場。土地勘ない観光客と避難車両の集中</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: 48 REPORTED PROBLEMS ==================== -->
+        <section id="section-problems" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Section 4: Problem Database</span>
+                        <h2 class="text-xl font-black text-slate-800">4. 発災後に報告される問題点（全48項目）</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            各カードの「ワークシートへ追加」ボタンを押すと、班活動の制度設計シート（タブ5）に検討課題としてピン留めできます。
+                        </p>
+                    </div>
+                    <!-- Filter Controls -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="filterProblems('all')" class="prob-filter-btn bg-yama-800 text-white text-xs font-bold px-3 py-2 rounded-lg" data-cat="all">すべて (48)</button>
+                        <button onclick="filterProblems('豪雨前・情報')" class="prob-filter-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg" data-cat="豪雨前・情報">豪雨前・情報 (1〜8)</button>
+                        <button onclick="filterProblems('判断')" class="prob-filter-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg" data-cat="判断">判断 (9〜18)</button>
+                        <button onclick="filterProblems('避難中')" class="prob-filter-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg" data-cat="避難中">避難中 (19〜32)</button>
+                        <button onclick="filterProblems('避難後・孤立')" class="prob-filter-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg" data-cat="避難後・孤立">避難後・孤立 (33〜48)</button>
+                    </div>
+                </div>
+
+                <!-- Search input -->
+                <div class="relative mb-6">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-lg"></i>
+                    <input type="text" id="problemSearchInput" oninput="renderProblems()" placeholder="キーワードで問題を絞り込む（例：圏外、橋、孤立、消防団、民生委員、観光客、車中泊、燃料...）" 
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yama-500">
+                </div>
+
+                <!-- Problems Grid -->
+                <div id="problemsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: PRIORITY TARGET PERSONAS ==================== -->
+        <section id="section-personas" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                <div class="mb-6">
+                    <span class="text-xs font-bold text-yama-700 uppercase tracking-wider">Section 5: Priority Target Analysis</span>
+                    <h2 class="text-xl font-black text-slate-800">5. 重点的に検討する対象者（7類型・複数条件が重なる複合ケース）</h2>
+                    <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                        やまびこ町では、住民や来訪者だけでなく、<strong>支援する側の「消防団員・民生委員」自身が家族被災と多人数担当の板挟みになる問題</strong>も重点対象に含まれています。
+                    </p>
+                </div>
+
+                <!-- 7 Priority Personas Cards -->
+                <div id="personasContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Custom Composite Case Simulator -->
+            <div class="bg-gradient-to-br from-yama-900 to-slate-900 text-white rounded-2xl p-6 shadow-md">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+                    <div>
+                        <span class="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold px-2.5 py-1 rounded">班活動用 複合条件シミュレーター</span>
+                        <h3 class="text-lg font-bold mt-2">「主対象者 × 重なる悪条件 × 地区」のかけ合わせでボトルネックを抽出する</h3>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="text-xs text-emerald-200 font-bold block mb-1">① 主分類（対象者 7類型）</label>
+                        <select id="simPersona" onchange="updateCustomSimulation()" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-sm text-white">
+                            <option value="elderly">一人暮らし高齢者（携帯圏外・運転不可・持病）</option>
+                            <option value="facility">高齢者施設入所者（夜間少人数・河川沿い）</option>
+                            <option value="medical">在宅医療利用者（酸素・電源・薬）</option>
+                            <option value="isolated">孤立集落住民（道路一経路・高齢化）</option>
+                            <option value="trainee">外国人技能実習生（日本語情報・地域関係）</option>
+                            <option value="tourist">観光客・キャンプ客（土地勘なし・車集中）</option>
+                            <option value="supporter">消防団員・民生委員（家族被災・多人数担当）</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-emerald-200 font-bold block mb-1">② 副分類（重なる気象・インフラ悪条件）</label>
+                        <select id="simCondition" onchange="updateCustomSimulation()" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-sm text-white">
+                            <option value="night_rain">午前2時の豪雨音・暗闇・停電・通信途絶</option>
+                            <option value="road_cut">土砂崩れ・倒木・橋梁閉鎖で主要道路寸断</option>
+                            <option value="no_vehicle">福祉車両・運転手不足＆支援者が途中立往生</option>
+                            <option value="prolonged">孤立長期化・発電機燃料枯渇・町外職員不参集</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-emerald-200 font-bold block mb-1">③ 発生場所・地区</label>
+                        <select id="simLocation" onchange="updateCustomSimulation()" class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-sm text-white">
+                            <option value="奥峰地区">奥峰地区（高齢化58%・携帯圏外・一本道）</option>
+                            <option value="川原谷地区">川原谷地区（河川沿い・高齢者施設・橋依存）</option>
+                            <option value="杉ノ沢地区">杉ノ沢地区（土砂警戒区域・林業・実習生）</option>
+                            <option value="高原観光地区">高原観光地区（温泉・キャンプ・最大4,000人）</option>
+                            <option value="やまびこ中心地区">やまびこ中心地区（役場・病院・川沿い平地）</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="customSimResult" class="bg-white/10 border border-white/15 rounded-xl p-4 text-xs sm:text-sm space-y-2">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: AWARENESS, HAZARD MAP & DATA TRIAGE ==================== -->
+        <section id="section-hazard" class="hidden space-y-8">
+            
+            <!-- Appendix C: Resident Disaster Awareness Survey -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                    <span class="text-xs font-bold text-yama-700 uppercase">Appendix C</span>
+                    <h2 class="text-lg font-black text-slate-800 mt-0.5">追加資料C：住民の防災意識調査（認知と行動の差）</h2>
+                    <p class="text-xs text-slate-500 mt-1 mb-5">
+                        都市部より近隣関係や訓練参加率（44%）は高いものの、訓練が「昼間・晴天」に偏っており、マイ・タイムライン作成率はわずか9%にとどまります。
+                    </p>
+
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>町の洪水・土砂災害ハザードマップの存在を知っている</span>
+                                <span class="text-yama-700">73%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-yama-500 h-full rounded-full" style="width: 73%"></div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">課題：存在認知はあるが、高齢者は紙地図依存が強い。</p>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>地図を実際に見たことがある（全国水害調査69.3%より低め）</span>
+                                <span class="text-yama-700">61%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-yama-500 h-full rounded-full" style="width: 61%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>家族・近隣と要支援者の避難方法を話し合った</span>
+                                <span class="text-yama-700">59%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-yama-500 h-full rounded-full" style="width: 59%"></div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">課題：地域関係は強いが、支援者自身の高齢化が進み共倒れリスクがある。</p>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>避難所と安全な経路を確認している</span>
+                                <span class="text-amber-600">52%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-amber-500 h-full rounded-full" style="width: 52%"></div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">課題：経路確認があっても、夜間豪雨・土砂・橋閉鎖時に利用可能とは限らない。</p>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>自宅が洪水・土砂災害区域か説明できる</span>
+                                <span class="text-amber-600">46%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-amber-500 h-full rounded-full" style="width: 46%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>過去3年以内に地区訓練へ参加</span>
+                                <span class="text-amber-600">44%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-amber-500 h-full rounded-full" style="width: 44%"></div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">課題：都市部より高いが、訓練が「昼間・晴天」に偏り、夜間停電訓練が不足。</p>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>「高齢者等避難」で実際に移動を始めると思う</span>
+                                <span class="text-rose-600">38%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-rose-500 h-full rounded-full" style="width: 38%"></div>
+                            </div>
+                            <p class="text-[11px] text-rose-600 font-medium mt-0.5">課題：「周囲に変化がない」「夜間の道路の方が危険」が判断を遅らせる。</p>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>マイ・タイムライン（個人の避難行動計画）を作成している</span>
+                                <span class="text-rose-700">9%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div class="bg-rose-600 h-full rounded-full" style="width: 9%"></div>
+                            </div>
+                            <p class="text-[11px] text-rose-600 font-bold mt-0.5">最重要課題：認知から「いつ・誰と・どの段階で動くか」の個人計画への移行が極めて弱い。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appendix D & E -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                        <span class="text-xs font-bold text-rose-600 uppercase">Appendix D</span>
+                        <h3 class="text-lg font-black text-slate-800 mt-0.5">追加資料D：現行ハザードマップの仕様と限界</h3>
+                        <div class="mt-3 text-xs space-y-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <div><span class="font-bold text-slate-700">名称：</span>やまびこ町 洪水・土砂災害ハザードマップ</div>
+                            <div><span class="font-bold text-slate-700">最終全面改訂：</span>2022年6月（2024年豪雨後に土砂災害警戒区域を一部追記）</div>
+                            <div><span class="font-bold text-slate-700">提供方法：</span>全戸配布の紙冊子、町WebサイトPDF、役場・公民館配布</div>
+                            <div class="pt-2 border-t border-slate-200">
+                                <span class="font-bold text-rose-700 block mb-1">【未掲載・弱い情報（制度設計の急所）】</span>
+                                <p class="text-slate-700 leading-relaxed">
+                                    道路ごとの孤立可能性、橋の通行判断基準、携帯圏外エリア、避難所開設優先順位、福祉車両の配置位置、観光客向け多言語・避難誘導情報。
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- District Viewing Rates -->
+                        <div class="mt-4">
+                            <span class="text-xs font-bold text-slate-700 block mb-2">地区別の「ハザードマップを見たことがある」推定割合</span>
+                            <div class="grid grid-cols-5 gap-1.5 text-center text-xs">
+                                <div class="bg-slate-100 p-2 rounded-lg">
+                                    <span class="block text-[10px] text-slate-500">中心地区</span>
+                                    <span class="font-black text-slate-800">70%</span>
+                                </div>
+                                <div class="bg-slate-100 p-2 rounded-lg">
+                                    <span class="block text-[10px] text-slate-500">川原谷</span>
+                                    <span class="font-black text-slate-800">68%</span>
+                                </div>
+                                <div class="bg-amber-50 border border-amber-200 p-2 rounded-lg">
+                                    <span class="block text-[10px] text-amber-700 font-bold">奥峰</span>
+                                    <span class="font-black text-amber-800">56%</span>
+                                </div>
+                                <div class="bg-slate-100 p-2 rounded-lg">
+                                    <span class="block text-[10px] text-slate-500">杉ノ沢</span>
+                                    <span class="font-black text-slate-800">60%</span>
+                                </div>
+                                <div class="bg-rose-50 border border-rose-200 p-2 rounded-lg">
+                                    <span class="block text-[10px] text-rose-600 font-bold">高原観光</span>
+                                    <span class="font-black text-rose-700">49%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appendix E: Information Triage -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                        <span class="text-xs font-bold text-amber-700 uppercase">Appendix E: Information Selection</span>
+                        <h3 class="text-base font-black text-slate-800 mt-0.5">追加資料E：情報の取捨選択トレーニング</h3>
+                        <p class="text-xs text-slate-500 mt-1 mb-3">
+                            今回の避難制度設計に直接不要に見える統計でも、「特定の条件・資源活用」と結びつける場合のみ有効な根拠になります。
+                        </p>
+                        <div class="space-y-2 text-xs">
+                            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex justify-between items-start gap-2">
+                                <div>
+                                    <span class="font-bold text-slate-800">温泉の年間入湯者数・特産品の販売額</span>
+                                    <span class="block text-[11px] text-slate-500">例外活用：繁忙期の観光客避難推計、地元事業者を物資・食料供給主体として協定化する場合</span>
+                                </div>
+                                <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] shrink-0">協定次第</span>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex justify-between items-start gap-2">
+                                <div>
+                                    <span class="font-bold text-slate-800">森林面積の樹種別割合・空き家の外観デザイン分類</span>
+                                    <span class="block text-[11px] text-slate-500">例外活用：浅根性樹種の倒木による林道閉塞予測、老朽空き家の倒壊による避難路閉塞対策</span>
+                                </div>
+                                <span class="bg-sky-100 text-sky-800 px-2 py-0.5 rounded text-[10px] shrink-0">条件付活用</span>
+                            </div>
+                            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex justify-between items-start gap-2">
+                                <div>
+                                    <span class="font-bold text-slate-800">町民運動会の参加者数・町花「やまゆり」植栽本数</span>
+                                    <span class="block text-[11px] text-slate-500">例外活用：運動会を通じた地区共助ネットワーク・訓練母体化（植栽本数は原則不要）</span>
+                                </div>
+                                <span class="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-[10px] shrink-0">原則不要</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 5: GROUP WORKSHEET & INSTITUTION DESIGNER ==================== -->
+        <section id="section-workshop" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4 mb-6">
+                    <div>
+                        <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Group Activity Workbench</span>
+                        <h2 class="text-xl font-black text-slate-800">班活動で検討する8つの問い・制度設計ワークシート</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            やまびこ町の課題に対する班の制度設計を入力し、ワンクリックで発表・議事録用テキストとしてコピーできます。
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="loadSampleProposal()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg flex items-center gap-1">
+                            <i class="ph ph-magic-wand"></i> 記入例を読み込む
+                        </button>
+                        <button onclick="copyWorksheetReport()" class="text-xs bg-yama-700 hover:bg-yama-800 text-white font-bold px-4 py-2 rounded-lg shadow flex items-center gap-1.5">
+                            <i class="ph ph-copy"></i> 設計案をテキスト出力・コピー
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pinned Problems from Tab 2 -->
+                <div class="mb-6 bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="ph-fill ph-push-pin text-amber-600"></i>
+                            班で選択した解決対象の報告問題（タブ2から追加・削除可能）
+                        </span>
+                        <button onclick="switchTab('problems')" class="text-xs text-yama-700 hover:underline font-bold">+ 問題一覧(全48件)から選ぶ</button>
+                    </div>
+                    <div id="pinnedProblemsList" class="flex flex-wrap gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- 8 Inquiry Fields Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200">
+                        <label class="text-sm font-black text-slate-800 flex items-center gap-2 mb-1">
+                            <span class="bg-yama-800 text-white text-xs px-2 py-0.5 rounded">問1</span> 対象者（主分類 × 副分類・地区）
+                        </label>
+                        <p class="text-xs text-slate-500 mb-2">誰が最も深刻な影響を受けるか。主分類と重なる条件（副分類）は何か。</p>
+                        <textarea id="ws-q1" rows="3" placeholder="例：奥峰地区の孤立可能性集落に暮らす一人暮らし高齢者・在宅医療利用者（携帯圏外・運転不可・道路一経路・民生委員も高齢化）" class="w-full p-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yama-500"></textarea>
+                    </div>
+
+                    <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200">
+                        <label class="text-sm font-black text-slate-800 flex items-center gap-2 mb-1">
+                            <span class="bg-sky-700 text-white text-xs px-2 py-0.5 rounded">問2</span> 避難前（情報伝達・危険判断）
+                        </label>
+                        <p class="text-xs text-slate-500 mb-2">豪雨音・圏外・停電の中で情報はどう届くか。夜間午前2時にどう判断させるか。</p>
+                        <textarea id="ws-q2" rows="3" placeholder="例：午前2時の夜間豪雨での移動はかえって危険なため、前日夕方の「線状降水帯予測情報」または「高齢者等避難」発令の段階（明るいうち）に事前避難を完了させるタイムライン制度を導入。" class="w-full p-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yama-500"></textarea>
+                    </div>
+
+                    <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200">
+                        <label class="text-sm font-black text-slate-800 flex items-center gap-2 mb-1">
+                            <span class="bg-amber-600 text-white text-xs px-2 py-0.5 rounded">問3</span> 避難中（移動支援・経路確保）
+                        </label>
+                        <p class="text-xs text-slate-500 mb-2">誰が移動を支援するか。道路寸断・橋閉鎖・車両不足・支援者被災時はどうするか。</p>
+                        <textarea id="ws-q3" rows="3" placeholder="例：中心地区に偏在している福祉車両を、警戒レベル2の段階で奥峰・川原谷・杉ノ沢へ前進配備する。長距離移動を避け、集落内の耐震・高台集会所への「集落内事前避難」を原則化する。" class="w-full p-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yama-500"></textarea>
+                    </div>
+
+                    <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200">
+                        <label class="text-sm font-black text-slate-800 flex items-center gap-2 mb-1">
+                            <span class="bg-emerald-700 text-white text-xs px-2 py-0.5 rounded">問4</span> 避難後（孤立対策・医療・介護・衛生）
+                        </label>
+                        <p class="text-xs text-slate-500 mb-2">孤立集落の把握、燃料・電源、水・トイレ、服薬・嚥下食、町外職員不足をどう補うか。</p>
+                        <textarea id="ws-q4" rows="3" placeholder="例：孤立可能性14集落の集会所に衛星通信（Starlink等）・太陽光蓄電池・7日分の水/とろみ食/簡易トイレ・医療処方コピーを分散備蓄し、道路復旧まで集落単位で自立継続できる拠点にする。" class="w-full p-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yama-500"></textarea>
+                    </div>
+
+                    <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200">
+                        <label class="text-sm font-black text-slate-800 flex items-center gap-2 mb-1">
+                            <span class="bg-indigo-700 text-white text-xs px-2 py-0.5 rounded">問5</span> 運営主体と役割分担
+                        </label>
+                        <p class="text-xs text-slate-500 mb-2">役場、消防団、民生委員、高齢者施設、観光宿泊事業者、住民の役割をどう分けるか。</p>
+                        <textarea id="ws-q5" rows="3" placeholder="例：民生委員1人に多数世帯を背負わせず「隣組3世帯ペア制」へ分散。高原観光地区の温泉旅館8軒と災害協定を結び、観光客の館内待機および要介護者の二次福祉避難所として活用する。" class="w-full p-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yama-500"></textarea>
+                    </div>
+
+                    <div class="bg-rose-50/60 p-4 rounded-xl border border-rose-200">
+                        <label class="text-sm font-black text-rose-900 flex items-center gap-2 mb-1">
+                            <span class="bg-rose-600 text-white text-xs px-2 py-0.5 rounded">問6</span> 代替策（プランB・フェイルセーフ）
+                        </label>
+                        <p class="text-xs text-rose-700 mb-2">想定した道路・橋・通信・支援者が機能せず、夜間に取り残された場合の第二案は何か。</p>
+                        <textarea id="ws-q6" rows="3" placeholder="例：夜間に道路冠水・土砂リスクが高まった場合は「無理な屋外移動の中止（自宅2階・山側反対室への垂直避難）」へ即時切替。停電・圏外時は特定小電力トランシーバーと定時安否フラッグで集落内確認。" class="w-full p-2.5 text-sm bg-white border border-rose-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                    </div>
+
+                    <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200">
+                        <label class="text-sm font-black text-slate-800 flex items-center gap-2 mb-1">
+                            <span class="bg-slate-700 text-white text-xs px-2 py-0.5 rounded">問7</span> 実現可能性（人員・設備・予算・訓練）
+                        </label>
+                        <p class="text-xs text-slate-500 mb-2">マイ・タイムライン作成率9%や昼間偏重訓練をどう改善し、設備・予算を維持するか。</p>
+                        <textarea id="ws-q7" rows="3" placeholder="例：参加率の高い「町民運動会」やサロン行事とセットでマイ・タイムライン作成会を実施（9%→60%へ）。年1回、夕方〜夜間の暗闇・停電想定でのトランシーバー点呼訓練を行う。" class="w-full p-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yama-500"></textarea>
+                    </div>
+
+                    <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-200">
+                        <label class="text-sm font-black text-amber-900 flex items-center gap-2 mb-1">
+                            <span class="bg-amber-700 text-white text-xs px-2 py-0.5 rounded">問8</span> 副作用の検証（トレードオフ・集落間対立防止）
+                        </label>
+                        <p class="text-xs text-amber-800 mb-2">提案によって消防団員・民生委員の犠牲や、観光客と住民の競合、集落間対立が起きないか。</p>
+                        <textarea id="ws-q8" rows="3" placeholder="例：消防団員・自治会役員の共倒れ（#18, #25）を防ぐため「支援者自身の避難完了リミット時刻」を明文化。また道路啓開と物資配分の優先順位基準（医療依存度×備蓄残日数）を平時に全集落合意しておく（#48）。" class="w-full p-2.5 text-sm bg-white border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Reference & Study Guide Modal -->
+    <div id="guideModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl border border-slate-200 p-6">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                <h3 class="text-lg font-black text-slate-800">資料の読み方・参考にした実災害および公的調査</h3>
+                <button onclick="closeGuideModal()" class="text-slate-400 hover:text-slate-700 text-xl"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
+                    <h4 class="font-bold text-amber-900 mb-1">班活動の4原則</h4>
+                    <ul class="list-disc list-inside space-y-1 text-xs text-amber-900">
+                        <li>問題を「情報・判断・移動・避難生活」の4段階から確認する。</li>
+                        <li>対象者を一つの属性だけでなく、複数条件が重なる複合ケースとして考える。</li>
+                        <li>支援者・設備・通信・道路が機能しない場合の代替策（プランB）まで検討する。</li>
+                        <li>本資料の人口・施設数等は学習用に作成した架空データである。</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 mb-2">参考にした実災害・公的資料</h4>
+                    <ul class="space-y-2.5 text-xs">
+                        <li class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                            <strong>[1] 復興庁「東日本大震災における震災関連死に関する報告」</strong><br>
+                            避難所生活の疲労、避難移動、病院機能停止、医療提供の遅れ、要支援高齢者へのケア不足を問題設定に反映。
+                        </li>
+                        <li class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                            <strong>[2] 内閣府「令和7年版 防災白書・能登半島地震の課題と教訓」</strong><br>
+                            情報把握、アクセス、支援拠点、要配慮者、避難所環境、物資輸送、生活用水・孤立集落の課題を反映。
+                        </li>
+                        <li class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                            <strong>[3] 内閣府「令和3年版 防災白書・令和2年7月豪雨における避難所等の対応」</strong><br>
+                            避難所外避難者、要介護者の安否確認、ホテル・旅館活用、高齢者施設の被災課題を反映。
+                        </li>
+                        <li class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                            <strong>[4] 内閣府「平成28年熊本地震及び令和2年7月豪雨における災害対応の課題」</strong><br>
+                            線状降水帯、通信途絶、夜間避難、要支援者、被災者情報共有の課題を反映。
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-6 text-right">
+                <button onclick="closeGuideModal()" class="bg-yama-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Notification Toast -->
+    <div id="toastBox" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 text-xs font-bold flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none z-50">
+        <i class="ph-fill ph-check-circle text-emerald-400 text-lg"></i>
+        <span id="toastMessage">完了しました</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 mt-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+                <span class="font-bold text-white">やまびこ町 総合防災・地域分析ポータル</span> — 第4回定例会 事前学習・班活動用デジタル教材
+            </div>
+            <div class="text-slate-500">
+                ※本サイトの自治体名・人口・地図は学習用の架空設定です。
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ==================== 1. DISTRICT DATASET (Section 2, Appendix B, C, D) ====================
+        const districtsData = {
+            chuo: {
+                id: 'chuo',
+                name: 'やまびこ中心地区（役場・病院・物資拠点）',
+                badge: '行政・医療・支援車両の集中域',
+                colorClass: 'rose',
+                pop: '6,500人',
+                elderly: '1,900人（高齢化率 29.2%）',
+                foreigner: '120人',
+                infant: '520人（町内最多）',
+                medical: '420人（町内最多）',
+                weakTies: '850人（集合住宅・単身世帯）',
+                mapViewed: '70％',
+                normalFeature: '町役場、病院・診療所、スーパー、中学校（総合避難所）、福祉避難所、移動支援車両が川沿いの平地に集中。',
+                disasterRisk: 'やまびこ川沿いの内水・外水氾濫、町外居住職員の参集困難、病院・物資拠点へのアクセス集中、町全体の支援機能の同時被災。',
+                awarenessNote: '情報入手手段は多いが、「役場や病院が近いからいざとなれば支援が来る」という行政依存が見られる。',
+                relatedProblems: [7, 8, 20, 24, 30, 31, 38, 40, 46, 47]
+            },
+            kawaradani: {
+                id: 'kawaradani',
+                name: '川原谷地区（南部 河川沿い集落・高齢者施設）',
+                badge: '河川氾濫・橋梁閉鎖リスク',
+                colorClass: 'sky',
+                pop: '4,200人',
+                elderly: '1,900人（高齢化率 45.2%）',
+                foreigner: '60人',
+                infant: '210人',
+                medical: '310人',
+                weakTies: '380人',
+                mapViewed: '68％',
+                normalFeature: 'やまびこ川沿いに住宅と高齢者施設が立地。中心部の病院・役場・福祉避難所へは「橋」を利用して移動する車依存地域。',
+                disasterRisk: '河川氾濫・浸水、橋（清流橋・やまびこ橋）の通行止めによる中心部との分断、夜間の少人数体制下での高齢者施設避難の遅れ。',
+                awarenessNote: '過去の浸水経験から危険認識は高い一方、高齢者施設の夜間避難や橋閉鎖時の代替手段には強い不安がある。',
+                relatedProblems: [10, 14, 15, 16, 20, 22, 23, 30, 31, 40]
+            },
+            okumine: {
+                id: 'okumine',
+                name: '奥峰地区（北部 山間小集落・上谷/東峰）',
+                badge: '高齢化58%・携帯圏外・孤立可能性',
+                colorClass: 'lime',
+                pop: '3,100人',
+                elderly: '1,800人（高齢化率 58.1%・町内最高）',
+                foreigner: '15人',
+                infant: '90人',
+                medical: '180人',
+                weakTies: '240人（独居高齢者多数）',
+                mapViewed: '56％',
+                normalFeature: '山間に小集落が点在し、中心部へ至る主要道路は事実上一本道。独居高齢者が多く、携帯電話の圏外区域が残る。',
+                disasterRisk: '土砂崩れ・林道寸断による集落孤立（迂回路なし）、停電と圏外による完全な通信途絶、在宅避難者の安否不明、水・食料・薬・燃料の輸送途絶。',
+                awarenessNote: '近隣共助の意識は高いが、「昔からの経験」を優先し、役場からの避難情報を待って行動が遅れる傾向がある。',
+                relatedProblems: [1, 2, 3, 4, 8, 9, 19, 21, 26, 27, 34, 35, 37, 48]
+            },
+            suginosawa: {
+                id: 'suginosawa',
+                name: '杉ノ沢地区（東部 林業・土砂警戒・実習生）',
+                badge: '土砂災害警戒区域・空き家・多文化',
+                colorClass: 'amber',
+                pop: '4,300人',
+                elderly: '2,100人（高齢化率 48.8%・高齢者数最多）',
+                foreigner: '185人（町内最多・林業/製造業実習生）',
+                infant: '190人',
+                medical: '260人',
+                weakTies: '310人',
+                mapViewed: '60％',
+                normalFeature: '急傾斜地と土砂災害警戒区域が多く、林業・製造業が盛ん。外国人技能実習生が多く居住する一方、老朽化した空き家が増加。',
+                disasterRisk: '深夜の斜面崩壊・土石流、倒木と空き家倒壊による道路閉塞、外国人労働者への日本語偏重情報の壁、消防団・民生委員の負担集中。',
+                awarenessNote: '土砂災害への関心は高いが、外国人労働者や転入者との平時の情報共有・避難訓練に大きな差がある。',
+                relatedProblems: [1, 5, 6, 10, 11, 13, 18, 19, 25, 26, 28, 42]
+            },
+            kogen: {
+                id: 'kogen',
+                name: '高原観光地区（西部 温泉郷・キャンプ場）',
+                badge: '最大4,000人の観光客・避難車両競合',
+                colorClass: 'purple',
+                pop: '3,500人（＋豪雨時も最大4,000人の観光客滞在）',
+                elderly: '1,700人（高齢化率 48.6%）',
+                foreigner: '100人（宿泊業従事者＋外国人旅行客）',
+                infant: '240人',
+                medical: '230人',
+                weakTies: '330人（季節雇用・短期滞在者）',
+                mapViewed: '49％（町内最低・観光客は未閲覧）',
+                normalFeature: 'やまびこ温泉郷（旅館8軒）や渓谷キャンプ場が立地。宿泊業の季節雇用者や外国人従業員が多く、休日は多数の来訪者が滞在。',
+                disasterRisk: '営業停止・移送基準の不在、土地勘のない観光客の車と住民避難車両が狭い県道で競合・立往生、宿泊者・キャンプ客の把握遅れ。',
+                awarenessNote: '宿泊事業者の防災意識は比較的高いが、観光客本人は町のハザードマップを受け取っておらず避難先認知が極めて低い。',
+                relatedProblems: [6, 17, 19, 22, 23, 29, 33, 42, 43]
+            }
+        };
+
+        // ==================== 2. ALL 48 PROBLEMS DATASET (Section 4) ====================
+        const problemsData = [
+            // 豪雨前・情報の問題 (1-8)
+            { id: 1, cat: '豪雨前・情報', stage: '情報', text: '豪雨音で防災行政無線が聞き取りにくい。' },
+            { id: 2, cat: '豪雨前・情報', stage: '情報', text: '携帯電話が圏外となる集落があり、アプリ情報が届かない。' },
+            { id: 3, cat: '豪雨前・情報', stage: '情報', text: '停電でテレビ、戸別受信機、充電器が使えない。' },
+            { id: 4, cat: '豪雨前・情報', stage: '情報', text: '高齢者が気象情報・キキクル・河川水位の意味を理解できない。' },
+            { id: 5, cat: '豪雨前・情報', stage: '情報', text: '土砂災害警戒情報と避難指示の違いが理解されていない。' },
+            { id: 6, cat: '豪雨前・情報', stage: '情報', text: '外国人労働者や観光客に日本語だけの情報が届く。' },
+            { id: 7, cat: '豪雨前・情報', stage: '情報', text: '避難所開設情報が集落の世話役や施設へ届かない。' },
+            { id: 8, cat: '豪雨前・情報', stage: '情報', text: '役場が全集落の雨量、道路、住民避難状況を把握できない。' },
+            // 判断の問題 (9-18)
+            { id: 9, cat: '判断', stage: '判断', text: '過去に浸水しなかった経験から避難を見送る。' },
+            { id: 10, cat: '判断', stage: '判断', text: '夜間で河川と斜面の状況が見えず、危険を過小評価する。' },
+            { id: 11, cat: '判断', stage: '判断', text: '避難所へ向かう道路の方が危険と考え、住民が移動をためらう。' },
+            { id: 12, cat: '判断', stage: '判断', text: '高齢者等避難が出ても周囲に変化がなく、避難開始が遅れる。' },
+            { id: 13, cat: '判断', stage: '判断', text: '家畜、農機具、自宅を守るために避難を遅らせる。' },
+            { id: 14, cat: '判断', stage: '判断', text: '高齢者施設が夜間の少人数体制で避難開始を決断できない。' },
+            { id: 15, cat: '判断', stage: '判断', text: '一般避難所で介護を受けられるか分からず、要介護者が自宅に残る。' },
+            { id: 16, cat: '判断', stage: '判断', text: '垂直避難と地区外への立退き避難の判断が分かれる。' },
+            { id: 17, cat: '判断', stage: '判断', text: '観光施設が営業停止・宿泊者移送の基準を決めていない。' },
+            { id: 18, cat: '判断', stage: '判断', text: '自治会役員が全員の避難確認を優先し、自身の避難が遅れる。' },
+            // 避難中の問題 (19-32)
+            { id: 19, cat: '避難中', stage: '移動', text: '土砂崩れ、倒木、落石で主要道路が通行不能になる。' },
+            { id: 20, cat: '避難中', stage: '移動', text: '橋が通行止めとなり、中心地区・病院へ行けない。' },
+            { id: 21, cat: '避難中', stage: '移動', text: '迂回路のない集落が孤立する。' },
+            { id: 22, cat: '避難中', stage: '移動', text: '冠水道路へ車が進入し、立ち往生する。' },
+            { id: 23, cat: '避難中', stage: '移動', text: '夜間の豪雨で道路と河川の境界が見えない。' },
+            { id: 24, cat: '避難中', stage: '移動', text: '高齢者を運ぶ車両・福祉車両・運転手が不足する。' },
+            { id: 25, cat: '避難中', stage: '移動', text: '消防団員が家族避難と住民支援を同時に求められる。' },
+            { id: 26, cat: '避難中', stage: '移動', text: '一人の民生委員が広い地区の多数世帯を担当している。' },
+            { id: 27, cat: '避難中', stage: '移動', text: '支援者が対象者宅へ向かう途中で道路寸断に遭う。' },
+            { id: 28, cat: '避難中', stage: '移動', text: '車いす・ストレッチャーを土砂や段差のある道で使用できない。' },
+            { id: 29, cat: '避難中', stage: '移動', text: '観光客の車と住民の避難車両が狭い道路で競合する。' },
+            { id: 30, cat: '避難中', stage: '移動', text: '避難所への最後の道路が冠水する。' },
+            { id: 31, cat: '避難中', stage: '移動', text: '避難所そのものが浸水想定区域にある。' },
+            { id: 32, cat: '避難中', stage: '移動', text: '認知症のある人が移動を拒否し、避難中に離れる。' },
+            // 避難後・孤立の問題 (33-48)
+            { id: 33, cat: '避難後・孤立', stage: '避難生活', text: '小規模避難所と自主避難所が分散し、人数を把握できない。' },
+            { id: 34, cat: '避難後・孤立', stage: '避難生活', text: '孤立集落の在宅避難者数と健康状態を確認できない。' },
+            { id: 35, cat: '避難後・孤立', stage: '避難生活', text: '水、食料、薬、燃料を孤立集落へ輸送できない。' },
+            { id: 36, cat: '避難後・孤立', stage: '避難生活', text: '断水によりトイレ・手洗い・口腔ケアが困難になる。' },
+            { id: 37, cat: '避難後・孤立', stage: '避難生活', text: '発電機燃料が不足し、通信・空調・医療機器が停止する。' },
+            { id: 38, cat: '避難後・孤立', stage: '避難生活', text: '町外居住の医療・福祉職員が出勤できない。' },
+            { id: 39, cat: '避難後・孤立', stage: '避難生活', text: '訪問介護、デイサービス、配食が停止する。' },
+            { id: 40, cat: '避難後・孤立', stage: '避難生活', text: '福祉避難所の職員自身が被災し、受入能力が低下する。' },
+            { id: 41, cat: '避難後・孤立', stage: '避難生活', text: '要介護者の医療・介護・服薬情報が紙や複数機関に分散する。' },
+            { id: 42, cat: '避難後・孤立', stage: '避難生活', text: '親戚宅、車中、作業小屋に避難した人が支援から漏れる。' },
+            { id: 43, cat: '避難後・孤立', stage: '避難生活', text: '車中泊、脱水、血栓症、生活不活発病の可能性が高まる。' },
+            { id: 44, cat: '避難後・孤立', stage: '避難生活', text: '高齢者がトイレを我慢し、水分摂取を控える。' },
+            { id: 45, cat: '避難後・孤立', stage: '避難生活', text: '食事がパン・おにぎりに偏り、嚥下・栄養対応が不足する。' },
+            { id: 46, cat: '避難後・孤立', stage: '避難生活', text: '避難所の冷房が使えず熱中症の危険が高まる。' },
+            { id: 47, cat: '避難後・孤立', stage: '避難生活', text: '外部支援者の宿泊、駐車、活動拠点がない。' },
+            { id: 48, cat: '避難後・孤立', stage: '避難生活', text: '道路復旧や物資配分の優先順位を巡り集落間で対立する。' }
+        ];
+
+        // ==================== 3. PRIORITY PERSONAS DATASET (Section 5: 7 Archetypes) ====================
+        const personasData = [
+            {
+                title: '一人暮らし高齢者',
+                conditions: '携帯圏外・運転不可・持病',
+                stages: ['情報', '判断', '移動', '避難生活'],
+                icon: 'ph-person-simple-walk',
+                details: {
+                    info: '豪雨音で防災無線が聞こえず、携帯圏外かつ停電で戸別受信機やテレビも使えない（#1, #2, #3）。',
+                    judge: 'キキクルの意味が分からず「過去も大丈夫だった」「夜間の外は危険」と自宅に留まる（#4, #9, #10, #11）。',
+                    move: '自家用車がなく、迎えの民生委員や福祉車両も道路寸断・車両不足で到着しない（#24, #26, #27）。',
+                    life: '孤立集落で在宅避難となり健康状態が把握されず、断水・トイレ我慢・常用薬不足で衰弱する（#34, #36, #41, #44）。'
+                }
+            },
+            {
+                title: '高齢者施設入所者',
+                conditions: '夜間少人数・河川沿い',
+                stages: ['判断', '移動', '避難生活'],
+                icon: 'ph-wheelchair',
+                details: {
+                    info: '深夜2時の急激な水位上昇と避難所開設状況が施設夜勤者へ正確に伝わらない（#7, #10）。',
+                    judge: '夜間少人数体制のため、全員を移動させる決断ができず、垂直避難か立退きか迷う（#14, #16）。',
+                    move: '福祉車両と運転手が圧倒的に不足し、橋の通行止めや土砂・段差でストレッチャー移動も難航（#20, #24, #28）。',
+                    life: '避難先で電源・冷房・吸引器が使えず、パンや握り飯ばかりで嚥下食・口腔ケアが不足する（#36, #37, #45, #46）。'
+                }
+            },
+            {
+                title: '在宅医療利用者',
+                conditions: '酸素・電源・薬',
+                stages: ['移動', '避難生活'],
+                icon: 'ph-heartbeat',
+                details: {
+                    info: '停電復旧見通しや福祉避難所の受入可否が届かず、紙の医療・処方情報も分散（#3, #7, #41）。',
+                    judge: '一般避難所で医療処置や電源が確保できるか分からず、自宅待機を選んでしまう（#15）。',
+                    move: '橋の閉鎖と主要道路の土砂崩れで中心地区の病院へ搬送できない（#19, #20）。',
+                    life: '発電機燃料の枯渇で酸素濃縮器等の医療機器が停止し、町外医療職の不参集でケアが途絶える（#37, #38, #40）。'
+                }
+            },
+            {
+                title: '孤立集落住民',
+                conditions: '道路一経路・高齢化',
+                stages: ['情報', '移動', '避難生活'],
+                icon: 'ph-mountains',
+                details: {
+                    info: '携帯圏外と停電が重なり、役場から集落全体の雨量・道路被害・安否が全く見えなくなる（#2, #3, #8）。',
+                    judge: '高齢者等避難の段階では周囲に変化がなく、家畜や農機具の心配もあり避難を見送る（#12, #13）。',
+                    move: '唯一の主要道路が土砂崩れ・倒木で寸断され、林道も車両通行困難で14集落が孤立する（#19, #21）。',
+                    life: '水・食料・薬・燃料の輸送が途絶え（#35）、道路復旧や物資配分の優先順位を巡り集落間対立が生じる（#48）。'
+                }
+            },
+            {
+                title: '外国人技能実習生',
+                conditions: '日本語情報・地域関係',
+                stages: ['情報', '判断'],
+                icon: 'ph-translate',
+                details: {
+                    info: '防災無線や緊急速報が日本語のみで届き、「土砂災害警戒情報」と「避難指示」の違いが分からない（#5, #6）。',
+                    judge: '杉ノ沢や高原観光地区で地域とのつながりが弱く、いつ・どこへ逃げるべきか相談相手がいない（#6, #16）。',
+                    move: '夜間の豪雨の中、危険な冠水道路や土砂災害区域を歩いて移動してしまうリスク（#19, #23）。',
+                    life: '作業小屋や社員寮に留まったまま行政の避難者把握から漏れ、食料・水支援が届かない（#33, #42）。'
+                }
+            },
+            {
+                title: '観光客・キャンプ客',
+                conditions: '土地勘・車集中',
+                stages: ['情報', '判断', '移動'],
+                icon: 'ph-tent',
+                details: {
+                    info: '町のハザードマップを持っておらず、宿泊施設の簡易図のみで土地勘が全くない（#6, 資料D）。',
+                    judge: '観光施設側が営業停止・宿泊者移送の基準を決めておらず、深夜まで避難判断が遅れる（#17）。',
+                    move: '一斉に自家用車で脱出しようとして狭い県道で住民車両と競合し、冠水道路で立ち往生する（#22, #23, #29）。',
+                    life: '車中泊を余儀なくされ、避難者把握から漏れるとともに脱水・エコノミークラス症候群の危険が高まる（#42, #43）。'
+                }
+            },
+            {
+                title: '消防団員・民生委員',
+                conditions: '家族被災・多人数担当',
+                stages: ['移動', '運営'],
+                icon: 'ph-shield-warning',
+                details: {
+                    info: '避難所開設情報やどの道路が通行可能かの情報が役場から現場の世話役へ届かない（#7, #8）。',
+                    judge: '自治会役員や民生委員が「全員の避難確認」を優先するあまり、自身の避難タイミングを失う（#18）。',
+                    move: '一人の民生委員が広大な地区の多数世帯を受け持ち、対象者宅へ向かう途中で道路寸断に遭う（#25, #26, #27）。',
+                    life: '消防団員も自身の家族避難と住民救助の板挟みになり、町外職員不在の中で現場運営が限界を超える（#25, #33, #38）。'
+                }
+            }
+        ];
+
+        // ==================== 4. DISASTER CASCADING CHAINS (Section 3) ====================
+        const cascadingChains = [
+            {
+                id: 'isolation',
+                title: '⛰️ 土砂崩れ・道路寸断の連鎖',
+                subtitle: '14集落の孤立と医療・物資の途絶',
+                steps: [
+                    '梅雨末期 午前2時、線状降水帯により斜面崩壊・倒木・落石が多発 (#19)',
+                    '一本道の奥峰地区など14集落が孤立し、川原谷の橋も通行止めに (#20, #21)',
+                    '迎えに向かった支援者や福祉車両が途中で立ち往生 (#24, #27)',
+                    '小規模・自主避難所が分散し、孤立集落の安否と健康状態が把握不能に (#33, #34)',
+                    '水・食料・薬・燃料が輸送できず、復旧優先順位を巡り集落間対立が発生 (#35, #48)'
+                ]
+            },
+            {
+                id: 'blackout',
+                title: '⚡ 停電・通信圏外の連鎖',
+                subtitle: '暗闇の情報空白と医療・空調停止',
+                steps: [
+                    '豪雨音で防災無線が聞こえない中、停電と基地局停止が発生 (#1, #2, #3)',
+                    'テレビ・戸別受信機・スマホ充電が使えず、役場も全集落の状況を把握不能 (#3, #8)',
+                    '夜間暗闇で河川・斜面が見えず、住民が危険を過小評価して自宅待機 (#10, #12)',
+                    '避難所や在宅の発電機燃料が枯渇し、通信・冷房・酸素医療機器が停止 (#37, #46)'
+                ]
+            },
+            {
+                id: 'supporter',
+                title: '🚒 支援者被災・福祉崩壊の連鎖',
+                subtitle: '民生委員・消防団・施設職員の限界',
+                steps: [
+                    '高齢者等避難が出ても住民が動かず、深夜2時に事態が急迫 (#9, #12)',
+                    '1人の民生委員が多数世帯を回り、自治会役員も確認優先で逃げ遅れる (#18, #26)',
+                    '消防団員が家族避難と住民支援の板挟みになり、支援途中に道路寸断 (#25, #27)',
+                    '高齢者施設は夜間少人数で動けず、町外居住の医療福祉職も出勤不能に (#14, #38, #40)'
+                ]
+            },
+            {
+                id: 'tourist',
+                title: '🚗 観光車両・夜間冠水の連鎖',
+                subtitle: '県道ボトルネックと車中泊リスク',
+                steps: [
+                    '高原観光地区（最大4,000人滞在）で営業停止・移送基準がなく判断遅延 (#17)',
+                    '土地勘のない観光客の車と住民の避難車両が狭い県道12号で競合 (#29)',
+                    '夜間豪雨で道路と川の境界が見えず、冠水道路へ進入して立ち往生 (#22, #23, #30)',
+                    '車中泊や作業小屋避難が多数発生し、支援漏れと血栓症・脱水リスクが増大 (#42, #43)'
+                ]
+            },
+            {
+                id: 'center_flood',
+                title: '🏥 中心部浸水・生活悪化の連鎖',
+                subtitle: '役場・病院・避難所そのものの被災',
+                steps: [
+                    '川沿いの平地にある中心地区で内水氾濫・河川増水が発生 (#30, #31)',
+                    '指定避難所そのものが浸水想定区域にあり、最後の進入路も冠水 (#30, #31)',
+                    '断水によりトイレ・手洗い・口腔ケアが困難になり、高齢者が水分を控える (#36, #44)',
+                    '食事がパン・おにぎりに偏り嚥下障害や関連死リスクが深刻化 (#41, #45)'
+                ]
+            }
+        ];
+
+        // ==================== STATE MANAGEMENT ====================
+        let currentDistrict = 'chuo';
+        let currentProblemCategory = 'all';
+        let pinnedProblemIds = [1, 2, 14, 18, 19, 21, 26, 35, 37]; // Default pinned problems for Yamabiko Town
+        let showHazardOverlay = true;
+
+        // ==================== RENDER FUNCTIONS ====================
+        function selectDistrict(districtId) {
+            currentDistrict = districtId;
+            document.querySelectorAll('.map-zone').forEach(el => el.classList.remove('active-zone'));
+            const activeZone = document.getElementById('zone-' + districtId);
+            if (activeZone) activeZone.classList.add('active-zone');
+
+            const d = districtsData[districtId];
+            const card = document.getElementById('districtDetailCard');
+
+            const badgeColors = {
+                rose: 'bg-rose-100 text-rose-800 border-rose-300',
+                sky: 'bg-sky-100 text-sky-800 border-sky-300',
+                lime: 'bg-lime-100 text-lime-900 border-lime-400',
+                amber: 'bg-amber-100 text-amber-900 border-amber-300',
+                purple: 'bg-purple-100 text-purple-800 border-purple-300'
+            };
+
+            const relatedHtml = d.relatedProblems.map(pid => {
+                const p = problemsData.find(item => item.id === pid);
+                return `<span onclick="switchTab('problems')" class="cursor-pointer inline-block bg-slate-100 hover:bg-yama-100 text-slate-700 text-[11px] px-2 py-0.5 rounded border border-slate-300 transition" title="${p.text}">#${p.id} ${p.text.slice(0, 14)}…</span>`;
+            }).join(' ');
+
+            card.innerHTML = `
+                <div class="flex items-start justify-between gap-2 border-b border-slate-200 pb-3 mb-4">
+                    <div>
+                        <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${badgeColors[d.colorClass]}">${d.badge}</span>
+                        <h3 class="text-lg font-black text-slate-900 mt-1.5">${d.name}</h3>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="text-[10px] text-slate-400 block">ハザードマップ閲覧率</span>
+                        <span class="text-base font-black text-yama-700">${d.mapViewed}</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs mb-4">
+                    <div class="col-span-3 pb-1.5 border-b border-slate-200">
+                        <span class="text-slate-500 text-[11px]">地区人口：</span>
+                        <strong class="text-slate-800">${d.pop}</strong>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-500 block">65歳以上</span>
+                        <strong class="text-slate-800">${d.elderly}</strong>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-500 block">外国人住民</span>
+                        <strong class="text-slate-800">${d.foreigner}</strong>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-500 block">障害・医療配慮</span>
+                        <strong class="text-slate-800">${d.medical}</strong>
+                    </div>
+                    <div class="col-span-3 pt-1 border-t border-slate-200 flex justify-between">
+                        <span class="text-[11px] text-rose-700 font-bold">地域とのつながりが弱い層：</span>
+                        <strong class="text-rose-700">${d.weakTies}</strong>
+                    </div>
+                </div>
+
+                <div class="space-y-3 text-xs leading-relaxed">
+                    <div>
+                        <span class="font-bold text-slate-700 block mb-0.5">■ 平時の特徴（セクション2）</span>
+                        <p class="text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">${d.normalFeature}</p>
+                    </div>
+                    <div>
+                        <span class="font-bold text-rose-700 block mb-0.5">■ 豪雨災害時に表面化する条件・リスク</span>
+                        <p class="text-rose-900 bg-rose-50/70 p-2.5 rounded-lg border border-rose-200 font-medium">${d.disasterRisk}</p>
+                    </div>
+                    <div>
+                        <span class="font-bold text-amber-800 block mb-0.5">■ 住民の防災意識傾向（追加資料C）</span>
+                        <p class="text-slate-600">${d.awarenessNote}</p>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200">
+                        <span class="font-bold text-slate-700 block mb-1.5">■ この地区で特に顕在化する報告問題（クリックで一覧へ）：</span>
+                        <div class="flex flex-wrap gap-1">${relatedHtml}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleMapOverlay(type) {
+            if (type === 'hazard') {
+                showHazardOverlay = !showHazardOverlay;
+                document.querySelectorAll('.hazard-overlay').forEach(el => {
+                    el.style.display = showHazardOverlay ? 'block' : 'none';
+                });
+                const btn = document.getElementById('btn-overlay-hazard');
+                if (showHazardOverlay) {
+                    btn.className = 'text-xs bg-amber-600 text-white px-2.5 py-1 rounded font-semibold flex items-center gap-1 shadow';
+                    btn.innerHTML = '<i class="ph-fill ph-warning"></i> 土砂・浸水危険域表示中';
+                } else {
+                    btn.className = 'text-xs bg-slate-600 text-slate-200 px-2.5 py-1 rounded font-semibold flex items-center gap-1';
+                    btn.innerHTML = '<i class="ph ph-warning"></i> 土砂・浸水危険域オフ';
+                }
+            }
+        }
+
+        // ==================== TAB 2: PROBLEMS EXPLORER ====================
+        function filterProblems(category) {
+            currentProblemCategory = category;
+            document.querySelectorAll('.prob-filter-btn').forEach(btn => {
+                if (btn.dataset.cat === category) {
+                    btn.className = 'prob-filter-btn bg-yama-800 text-white text-xs font-bold px-3 py-2 rounded-lg shadow';
+                } else {
+                    btn.className = 'prob-filter-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-lg';
+                }
+            });
+            renderProblems();
+        }
+
+        function renderProblems() {
+            const query = (document.getElementById('problemSearchInput')?.value || '').trim().toLowerCase();
+            const container = document.getElementById('problemsGrid');
+
+            const filtered = problemsData.filter(p => {
+                const matchCat = currentProblemCategory === 'all' || p.cat === currentProblemCategory;
+                const matchQuery = !query || p.text.toLowerCase().includes(query) || String(p.id).includes(query) || p.cat.includes(query);
+                return matchCat && matchQuery;
+            });
+
+            const catBadge = {
+                '豪雨前・情報': 'bg-sky-100 text-sky-800 border-sky-200',
+                '判断': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+                '避難中': 'bg-amber-100 text-amber-800 border-amber-200',
+                '避難後・孤立': 'bg-emerald-100 text-emerald-800 border-emerald-200'
+            };
+
+            container.innerHTML = filtered.map(p => {
+                const isPinned = pinnedProblemIds.includes(p.id);
+                return `
+                    <div class="p-4 rounded-xl border ${isPinned ? 'border-yama-500 bg-yama-50/40' : 'border-slate-200 bg-white'} shadow-sm flex flex-col justify-between gap-3 transition hover:shadow-md">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="text-xs font-black text-slate-400">問題 #${p.id}</span>
+                                <span class="text-[11px] font-bold px-2 py-0.5 rounded border ${catBadge[p.cat]}">${p.cat}</span>
+                            </div>
+                            <p class="text-sm font-bold text-slate-800 leading-snug">${p.text}</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                            <span class="text-[11px] text-slate-500">検討段階：<strong>${p.stage}</strong></span>
+                            <button onclick="togglePinProblem(${p.id})" class="text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 transition ${isPinned ? 'bg-yama-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">
+                                <i class="ph-fill ph-push-pin"></i>
+                                ${isPinned ? 'ワークシート選択中' : 'ワークシートへ追加'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function togglePinProblem(id) {
+            if (pinnedProblemIds.includes(id)) {
+                pinnedProblemIds = pinnedProblemIds.filter(item => item !== id);
+                showToast(`問題 #${id} をワークシートから外しました`);
+            } else {
+                pinnedProblemIds.push(id);
+                pinnedProblemIds.sort((a, b) => a - b);
+                showToast(`問題 #${id} を班活動ワークシートに追加しました`);
+            }
+            renderProblems();
+            renderPinnedProblems();
+        }
+
+        function renderPinnedProblems() {
+            const container = document.getElementById('pinnedProblemsList');
+            if (!container) return;
+            if (pinnedProblemIds.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-400">まだ選択されていません。「2. 報告された問題点」タブから検討したい問題を追加してください。</span>`;
+                return;
+            }
+            container.innerHTML = pinnedProblemIds.map(id => {
+                const p = problemsData.find(item => item.id === id);
+                return `
+                    <span class="inline-flex items-center gap-1.5 bg-white border border-yama-300 text-yama-900 text-xs font-medium px-3 py-1.5 rounded-lg shadow-sm">
+                        <strong class="text-yama-700">#${p.id}</strong> ${p.text}
+                        <button onclick="togglePinProblem(${p.id})" class="text-slate-400 hover:text-rose-600 ml-1"><i class="ph-bold ph-x"></i></button>
+                    </span>
+                `;
+            }).join('');
+        }
+
+        // ==================== TAB 3: PERSONAS & CUSTOM SIMULATOR ====================
+        function renderPersonas() {
+            const container = document.getElementById('personasContainer');
+            container.innerHTML = personasData.map(p => `
+                <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-xs font-bold bg-white border border-slate-200 px-2.5 py-1 rounded-full text-slate-700">重なる条件：${p.conditions}</span>
+                            <i class="ph-fill ${p.icon} text-2xl text-yama-700"></i>
+                        </div>
+                        <h3 class="text-lg font-black text-slate-900 mb-2">${p.title}</h3>
+                        <div class="flex flex-wrap gap-1 mb-4">
+                            ${p.stages.map(s => `<span class="text-[10px] font-bold bg-yama-800 text-white px-2 py-0.5 rounded">特に確認する段階：${s}</span>`).join('')}
+                        </div>
+                        <div class="space-y-2 text-xs">
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <strong class="text-sky-700 block">① 情報：</strong>
+                                <span class="text-slate-600">${p.details.info}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <strong class="text-indigo-700 block">② 判断：</strong>
+                                <span class="text-slate-600">${p.details.judge}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <strong class="text-amber-700 block">③ 移動：</strong>
+                                <span class="text-slate-600">${p.details.move}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                                <strong class="text-emerald-700 block">④ 避難生活・運営：</strong>
+                                <span class="text-slate-600">${p.details.life}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCustomSimulation() {
+            const persona = document.getElementById('simPersona').value;
+            const cond = document.getElementById('simCondition').value;
+            const loc = document.getElementById('simLocation').value;
+
+            const personaLabels = {
+                elderly: '一人暮らし高齢者（携帯圏外・運転不可・持病）',
+                facility: '高齢者施設入所者（夜間少人数・河川沿い）',
+                medical: '在宅医療利用者（酸素・電源・薬）',
+                isolated: '孤立集落住民（道路一経路・高齢化）',
+                trainee: '外国人技能実習生（日本語情報・地域関係）',
+                tourist: '観光客・キャンプ客（土地勘・車集中）',
+                supporter: '消防団員・民生委員（家族被災・多人数担当）'
+            };
+
+            const condAnalysis = {
+                night_rain: '午前2時の猛烈な豪雨音（#1）と停電（#3）・携帯圏外（#2）が重なり、屋外の斜面や河川の状況が全く見えなくなります（#10）。深夜になってからの立退き移動は冠水・転落リスク（#23）が極めて高いため、「前日明るいうちの事前移動」か「即時垂直避難」かを分ける制度が必要です。',
+                road_cut: '土砂崩れ・倒木（#19）と橋の通行止め（#20）により、中心地区の病院や福祉避難所へのルートが物理的に消滅します。中心地区から迎えの車両を送ることも不可能になるため、各地区内で完結できる避難先と医療・介護バックアップが不可欠です。',
+                no_vehicle: '65歳以上が周辺地区に集中しているのに対し、移動支援車両は中心地区に偏在しています（資料B）。さらに一人の民生委員が多数世帯を担当しており（#26）、支援者が向かう途中で道路寸断に遭う（#27）ため、外部からの迎えに依存しない共助または事前移送の仕組みが求められます。',
+                prolonged: '集落の孤立が長期化すると、発電機燃料の枯渇による通信・空調・酸素機器の停止（#37）、水・食料・薬の途絶（#35）、町外居住職員の不参集（#38）が連鎖します。さらに復旧順位を巡る集落間対立（#48）を防ぐ合意形成ルールが必要です。'
+            };
+
+            const resultBox = document.getElementById('customSimResult');
+            resultBox.innerHTML = `
+                <div class="font-bold text-amber-300 text-sm">
+                    検証ケース：【${loc}】における【${personaLabels[persona]}】×【${document.getElementById('simCondition').selectedOptions[0].text}】
+                </div>
+                <p class="text-slate-200 leading-relaxed">${condAnalysis[cond]}</p>
+                <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/15 text-xs text-emerald-200">
+                    <span>💡 班活動のヒント：夜間午前2時に動こうとするのではなく、「前日段階での事前分散配備」と「道路が切れた後の集落内自立」をセットで設計しましょう。</span>
+                    <button onclick="transferPersonaToWorksheet('${loc}の${personaLabels[persona]}（${document.getElementById('simCondition').selectedOptions[0].text}）')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg shrink-0">
+                        この対象者をワークシート問1にセット
+                    </button>
+                </div>
+            `;
+        }
+
+        function transferPersonaToWorksheet(text) {
+            document.getElementById('ws-q1').value = text;
+            switchTab('workshop');
+            showToast('ワークシートの「問1 対象者」に反映しました');
+        }
+
+        // ==================== DISASTER CASCADING DRAWER ====================
+        function initDisasterChains() {
+            const container = document.getElementById('chainTriggerContainer');
+            container.innerHTML = cascadingChains.map((c, idx) => `
+                <button onclick="selectChain('${c.id}')" id="chain-btn-${c.id}" class="chain-btn text-left p-3 rounded-xl border transition ${idx === 0 ? 'bg-amber-600 border-amber-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'}">
+                    <div class="font-bold text-sm">${c.title}</div>
+                    <div class="text-[11px] opacity-80 mt-0.5">${c.subtitle}</div>
+                </button>
+            `).join('');
+            selectChain('isolation');
+        }
+
+        function selectChain(chainId) {
+            document.querySelectorAll('.chain-btn').forEach(btn => {
+                btn.className = 'chain-btn text-left p-3 rounded-xl border transition bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700';
+            });
+            const activeBtn = document.getElementById('chain-btn-' + chainId);
+            if (activeBtn) {
+                activeBtn.className = 'chain-btn text-left p-3 rounded-xl border transition bg-amber-600 border-amber-400 text-white shadow-lg';
+            }
+
+            const chain = cascadingChains.find(c => c.id === chainId);
+            const detailBox = document.getElementById('chainDetailBox');
+            detailBox.innerHTML = `
+                <div class="text-xs font-bold text-amber-300 mb-2">${chain.title}：単独のトラブルではなく連鎖を追って制度を設計する</div>
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 items-center">
+                    ${chain.steps.map((step, i) => `
+                        <div class="bg-slate-900/90 border border-slate-700 p-3 rounded-lg text-xs relative">
+                            <span class="text-[10px] font-black text-amber-400 block mb-1">CHAIN ${i + 1}</span>
+                            <span class="text-slate-100 font-medium">${step}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function toggleDisasterMode() {
+            const panel = document.getElementById('disasterChainPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        // ==================== WORKSHEET FUNCTIONS ====================
+        function loadSampleProposal() {
+            document.getElementById('ws-q1').value = '【主分類】奥峰地区・杉ノ沢地区の孤立可能性集落に暮らす一人暮らし高齢者・在宅医療利用者、および彼らを支援する民生委員・消防団員\n【副分類】携帯圏外・自家用車運転不可・一本道寸断・夜間午前2時の豪雨停電';
+            document.getElementById('ws-q2').value = '豪雨音と停電・圏外で深夜に情報が届かない問題（#1, #2, #3）およびキキクル理解不足（#4）に対し、夜間午前2時の移動を前提とせず、前日夕方の「線状降水帯予測」または「警戒レベル3（高齢者等避難）」発令時点で、バッテリー内蔵型の色別LED警告灯（赤・黄・緑）とサイレンが集落内で自動点灯する仕組みを導入する。';
+            document.getElementById('ws-q3').value = '中心地区に偏在している移動支援車両（資料B）を、大雨注意報の段階で奥峰・川原谷・杉ノ沢へ「事前前進配備」する（#24）。また橋の通行止め（#20）や道路寸断（#19）に備え、中心地区まで長距離移送するのではなく、各集落内の安全な高台集会所や協定を結んだ高原観光地区の温泉旅館へ明るいうちに事前移送する。';
+            document.getElementById('ws-q4').value = '孤立可能な14集落の集会所に、衛星通信端末（Starlink等）、LPガス発電機＋太陽光蓄電池、7日分の水・とろみ付き非常食・簡易トイレ・汎用常備薬を分散備蓄する（#35, #36, #37, #45）。また要介護者の医療・服薬情報は防水ラミネート化した「防災医療カード」として本人宅と集会所の双方に保管する（#41）。';
+            document.getElementById('ws-q5').value = '・町役場：前進配備車両の指示と衛星回線での全集落モニタリング（#8）\n・隣組ペア（住民3世帯1組）：民生委員1人への負担集中（#26）を解消し、声かけと初期避難を分担\n・温泉旅館（高原観光地区）：観光客の館内待機（#17, #29）と、川原谷高齢者施設の二次福祉避難所受入\n・林業事業者（杉ノ沢）：重機・チェーンソーによる倒木除去協定（#19）';
+            document.getElementById('ws-q6').value = '【代替策（プランB）】万一、事前避難が間に合わず深夜に豪雨・道路冠水となった場合は、「無理な屋外移動の中止（自宅2階・崖と反対側の部屋への垂直避難）」へ即時切り替える（#11, #16, #23）。停電・携帯圏外時は、各戸に配布した乾電池式特定小電力トランシーバーと、翌朝の「黄色安否タペストリー掲出」で集落内の生存・健康状態を集約し、運動公園ヘリポート経由でドローン・ヘリ搬送を行う（#34）。';
+            document.getElementById('ws-q7').value = 'マイ・タイムライン作成率が9%と低い課題に対し、参加率の高い「町民運動会」や敬老会・サロン行事（資料E）とセットで「3色シール式マイ・タイムライン作成会」を実施。また昼間・晴天に偏っていた防災訓練（44%）を改め、年1回「日没後の懐中電灯・トランシーバー点呼訓練」を実施する。';
+            document.getElementById('ws-q8').value = '【副作用への対策】自治会役員や消防団員が住民確認を優先して被災する問題（#18, #25）を防ぐため、「河川水位・雨量が基準値に達した時点で支援者も即時撤退・垂直避難する」退避ルールを明文化する。また孤立後の道路復旧・物資配分を巡る集落間対立（#48）を防ぐため、「在宅医療電源の残時間・孤立人数・備蓄残日数」による客観的な優先順位スコアリングを平時に全集落合意しておく。';
+            showToast('やまびこ町（孤立集落×事前配備×支援者保護）の記入例を読み込みました');
+        }
+
+        function copyWorksheetReport() {
+            const pinnedText = pinnedProblemIds.map(id => {
+                const p = problemsData.find(item => item.id === id);
+                return `・[問題#${p.id}] ${p.text}`;
+            }).join('\n');
+
+            const report = [
+                '==================================================',
+                'やまびこ町（山間部型 × 集中豪雨・土砂災害） 班活動・制度設計シート',
+                '==================================================',
+                '',
+                '【対象とした報告問題】',
+                pinnedText || '（未選択）',
+                '',
+                '【1. 対象者（主分類・副分類）】',
+                document.getElementById('ws-q1').value || '（未入力）',
+                '',
+                '【2. 避難前（情報伝達・危険判断）】',
+                document.getElementById('ws-q2').value || '（未入力）',
+                '',
+                '【3. 避難中（移動支援・経路確保）】',
+                document.getElementById('ws-q3').value || '（未入力）',
+                '',
+                '【4. 避難後（孤立対策・医療・介護・衛生）】',
+                document.getElementById('ws-q4').value || '（未入力）',
+                '',
+                '【5. 運営主体と役割分担】',
+                document.getElementById('ws-q5').value || '（未入力）',
+                '',
+                '【6. 代替策（プランB・道路寸断や夜間豪雨で移動不能な場合）】',
+                document.getElementById('ws-q6').value || '（未入力）',
+                '',
+                '【7. 実現可能性（人員・設備・予算・夜間訓練・マイタイムライン）】',
+                document.getElementById('ws-q7').value || '（未入力）',
+                '',
+                '【8. 副作用の検証（支援者の共倒れ防止・集落間対立の防止）】',
+                document.getElementById('ws-q8').value || '（未入力）',
+            ].join('\n');
+
+            const tempArea = document.createElement('textarea');
+            tempArea.value = report;
+            document.body.appendChild(tempArea);
+            tempArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempArea);
+            showToast('やまびこ町の制度設計シートをクリップボードにコピーしました！');
+        }
+
+        // ==================== NAVIGATION & UI HELPERS ====================
+        function switchTab(tabId) {
+            ['overview', 'problems', 'personas', 'hazard', 'workshop'].forEach(id => {
+                document.getElementById('section-' + id).classList.add('hidden');
+                const tabBtn = document.getElementById('tab-' + id);
+                tabBtn.classList.remove('border-emerald-400', 'text-white', 'font-bold');
+                tabBtn.classList.add('border-transparent', 'text-slate-300');
+            });
+
+            document.getElementById('section-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('tab-' + tabId);
+            activeBtn.classList.remove('border-transparent', 'text-slate-300');
+            activeBtn.classList.add('border-emerald-400', 'text-white', 'font-bold');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openGuideModal() {
+            const modal = document.getElementById('guideModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeGuideModal() {
+            const modal = document.getElementById('guideModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('toastBox');
+            document.getElementById('toastMessage').textContent = msg;
+            box.classList.remove('opacity-0', 'pointer-events-none');
+            box.classList.add('opacity-100');
+            setTimeout(() => {
+                box.classList.remove('opacity-100');
+                box.classList.add('opacity-0', 'pointer-events-none');
+            }, 2800);
+        }
+
+        // Initialize on load
+        window.onload = function () {
+            selectDistrict('chuo');
+            renderProblems();
+            renderPinnedProblems();
+            renderPersonas();
+            updateCustomSimulation();
+            initDisasterChains();
+        };
+    </script>
+</body>
+</html>
